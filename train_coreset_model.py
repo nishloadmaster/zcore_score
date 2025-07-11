@@ -1,28 +1,35 @@
 import argparse
 import core.train as t
 
-def main(args):
 
+def main(args):
     t.seed_everything(args.manual_seed)
     train_loader, test_loader = t.load_coreset_dataset(args)
     model = t.load_model(args, len(test_loader.dataset.classes))
     t.train_coreset_model(args, model, train_loader, test_loader)
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train Coreset Model")
 
     parser.add_argument("--manual_seed", type=int, default=51)
 
     # Dataset.
-    dataset_choice = ["cifar10", "cifar100", "imagenet", "eurosat10", 
-                      "eurosat20", "eurosat40", "eurosat80", "fire_detection"]
+    dataset_choice = [
+        "cifar10",
+        "cifar100",
+        "imagenet",
+        "eurosat10",
+        "eurosat20",
+        "eurosat40",
+        "eurosat80",
+        "fire_detection",
+    ]
     parser.add_argument("--dataset", type=str, choices=dataset_choice)
     parser.add_argument("--data_dir", type=str)
     parser.add_argument("--results_dir", type=str)
     parser.add_argument("--num_workers", type=int, default=2)
-    parser.add_argument("--device", type=str, default="cuda",
-                        choices=["cpu", "mps", "cuda"])
+    parser.add_argument("--device", type=str, default="cuda", choices=["cpu", "mps", "cuda"])
 
     # Model.
     parser.add_argument("--architecture", type=str, default="resnet18")
