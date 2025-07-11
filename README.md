@@ -4,6 +4,19 @@
 
 \* Corresponding author
 
+## Features
+
+- **Zero-shot coreset selection** without requiring labeled data
+- **Multiple embedding models** support (CLIP, ResNet, YOLO)
+- **HuggingFace integration** for zero-shot image classification
+- **Automated pipeline** for end-to-end processing
+- **Flexible sampling strategies** (top-k, weighted)
+- **Visualization tools** for dataset exploration and analysis
+- **Docker support** for containerized deployment
+- **Comprehensive evaluation** with repeat trial analysis
+
+## Overview
+
 **Z**ero-Shot **Core**set Selection ([ZCore](https://arxiv.org/pdf/2411.15349 "ZCore Paper")) is a method of coreset selection for unlabeled data. Deep learning methods rely on massive data, resulting in substantial costs for storage, annotation, and model training. Coreset selection aims to select a subset of the data to train models with lower cost while ideally performing on par with the full data training. Although the majority of real-world data are unlabeled, previous state-of-the-art coreset methods cannot select data that are unlabeled. As a solution, ZCore addresses the problem of coreset selection without labels _or_ training on candidate data. Instead, ZCore uses existing foundation models to generate a zero-shot embedding space for unlabeled data, then quantifies the relative importance of each example based on overall coverage and redundancy within the embedding distribution. On ImageNet, the ZCore coreset achieves a higher accuracy than previous label-based coresets at a 90% prune rate, while removing annotation requirements for 1.15 million images.
 
 __Zero-Shot Coreset Selection Overview__
@@ -14,6 +27,9 @@ __Zero-Shot Coreset Selection Overview__
 ### Prerequisites
 - Python 3.8+
 - CUDA-compatible GPU (recommended)
+- For HuggingFace models: `transformers` library with PyTorch support
+- For YOLO embeddings: `ultralytics` library
+- For visualization: `fiftyone` library
 
 ### Installation
 
@@ -34,12 +50,47 @@ Alternatively, you can use the provided activation script:
 ./activate.sh
 ```
 
+### Docker Setup (Optional)
+
+For a containerized environment with CUDA support:
+
+```bash
+docker build -t zcore .
+docker run --gpus all -v $(pwd):/app -it zcore
+```
+
 ## Using ZCore
 We provide example ZCore commands for coreset selection and subsequent model training for the EuroSAT10 dataset from our paper. See instructions in **Repeat Trials** to repeat experiment trials and **Dataset Setup** for full ImageNet, CIFAR, or EuroSAT setup.
 
-Step 1. **Dataset**. [Download](https://www.dropbox.com/scl/fo/1mhwsunssr6g2v1wio0vq/AEI2cx3aZ2vWvFmSLDfUHtQ?rlkey=kbxo4uae43tnzvk6k7x5hk28u&st=8tkh3oyl&dl=0 "EuroSAT split download") and unzip ``eurosat10.zip`` in ``./data``.
+### Quick Start with Full Pipeline
 
-Step 2. **Zero-Shot Coreset Selection**
+For processing custom datasets with the complete ZCore pipeline:
+
+```bash
+./run_pipeline.sh <dataset_name>
+```
+
+This automated pipeline script runs all steps in sequence:
+1. Zero-shot classification using HuggingFace transformers
+2. Dataset organization and preprocessing
+3. ZCore coreset selection with YOLO embeddings
+4. Top-k sampling analysis
+
+### Manual Step-by-Step Usage
+
+**Step 1. Dataset Setup**. [Download](https://www.dropbox.com/scl/fo/1mhwsunssr6g2v1wio0vq/AEI2cx3aZ2vWvFmSLDfUHtQ?rlkey=kbxo4uae43tnzvk6k7x5hk28u&st=8tkh3oyl&dl=0 "EuroSAT split download") and unzip ``eurosat10.zip`` in ``./data``.
+
+**Step 2. Zero-Shot Classification** (for custom datasets)
+```bash
+python zeroshot_huggingface_classifier.py --image_dir <dataset_name> --candidate_labels fire smoke no_fire_or_smoke
+```
+
+**Step 3. Dataset Organization**
+```bash
+python create_dataset_for_zcore.py <dataset_name>
+```
+
+**Step 4. Zero-Shot Coreset Selection**
 ```bash
 python zeroshot_coreset_selection.py --dataset eurosat10 --data_dir ./data --results_dir ./results --embedding clip resnet18 --num_workers 10
 ```
@@ -49,12 +100,12 @@ python zeroshot_coreset_selection.py --dataset eurosat10 --data_dir ./data --res
 python zeroshot_coreset_selection.py --dataset eurosat10 --data_dir ./data --results_dir ./results --embedding yolo --num_workers 10
 ```
 
-**Complete YOLO pipeline example**
+**Step 5. Data Sampling and Analysis**
 ```bash
-python example_yolo_zcore.py --dataset eurosat10 --data_dir ./data --results_dir ./results --prune_rate 0.7
+python top_k_sampler.py --dataset_name <dataset_name> --prune_fraction 0.3 --prune_type top_k
 ```
 
-Step 3. **Train Coreset Model**
+**Step 6. Train Coreset Model**
 ```bash
 python train_coreset_model.py --prune_rate 0.7 --dataset eurosat10 --data_dir ./data --score_file ./results/eurosat10/zcore-eurosat10-clip-resnet18-1000Ks-2sd-ri-1000nn-4ex-0/score.npy
 ```
@@ -108,6 +159,36 @@ wget -qO- https://raw.githubusercontent.com/soumith/imagenetloader.torch/master/
 **CIFAR10** and **CIFAR100** can be downloaded [here](https://www.cs.toronto.edu/~kriz/cifar.html "CIFAR download").
 
 **EuroSAT80**, **EuroSAT40**, **EuroSAT20**, and **EuroSAT10** can be downloaded [here](https://www.dropbox.com/scl/fo/1mhwsunssr6g2v1wio0vq/AEI2cx3aZ2vWvFmSLDfUHtQ?rlkey=kbxo4uae43tnzvk6k7x5hk28u&st=8tkh3oyl&dl=0 "EuroSAT split download").
+
+## Additional Tools
+
+### Data Visualization
+Visualize your dataset using FiftyOne with embeddings:
+```bash
+python visualize_image_folder.py --image_dir <path_to_images> --embedding yolo
+```
+
+### Model Certainty Analysis
+Analyze model prediction certainty:
+```bash
+python visualize_model_certainty.py --dataset <dataset_name>
+```
+
+### Top-K Sampling
+Sample data based on ZCore scores with different strategies:
+```bash
+# Top-k sampling (default)
+python top_k_sampler.py --dataset_name <dataset_name> --prune_fraction 0.3 --prune_type top_k
+
+# Weighted sampling
+python top_k_sampler.py --dataset_name <dataset_name> --prune_fraction 0.3 --prune_type weighted --output_file sampled_data.csv
+```
+
+### Zero-Shot Classification
+Classify images using HuggingFace transformers:
+```bash
+python zeroshot_huggingface_classifier.py --image_dir <dataset_name> --candidate_labels class1 class2 class3 --model openai/clip-vit-large-patch14
+```
 
 ## Citation
 
