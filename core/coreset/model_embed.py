@@ -111,7 +111,8 @@ def load_fo_dataset(args):
         elif args.dataset == "fire_detection":
             path = os.path.join(args.data_dir, "fire_detection", "train")
         else:
-            raise ValueError(f"{args.dataset} not recognized.")
+            path = os.path.join(args.data_dir, args.dataset, "train")
+            # raise ValueError(f"{args.dataset} not recognized.")
 
         dataset = fo.Dataset.from_dir(path, dataset_type=fo.types.ImageClassificationDirectoryTree)
 

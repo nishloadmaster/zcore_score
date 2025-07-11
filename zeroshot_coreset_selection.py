@@ -58,17 +58,17 @@ if __name__ == "__main__":
     parser.add_argument("--trial", type=int, default=0)
 
     # Dataset.
-    dataset_choice = [
-        "cifar10",
-        "cifar100",
-        "imagenet",
-        "eurosat10",
-        "eurosat20",
-        "eurosat40",
-        "eurosat80",
-        "fire_detection",
-    ]
-    parser.add_argument("--dataset", type=str, choices=dataset_choice)
+    # dataset_choice = [
+    #     "cifar10",
+    #     "cifar100",
+    #     "imagenet",
+    #     "eurosat10",
+    #     "eurosat20",
+    #     "eurosat40",
+    #     "eurosat80",
+    #     "fire_detection",
+    # ]
+    parser.add_argument("--dataset", type=str)
     parser.add_argument("--data_dir", type=str)
     parser.add_argument("--results_dir", type=str)
     parser.add_argument("--num_workers", type=int, default=2)

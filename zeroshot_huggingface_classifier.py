@@ -43,7 +43,7 @@ def main(args):
     detector = pipeline(model=args.model, task="zero-shot-image-classification")
 
     # Directory containing all images to process
-    image_dir = args.image_dir
+    image_dir = f"data/{args.image_dir}"
 
     # Validate image directory exists
     if not os.path.exists(image_dir):
@@ -94,8 +94,11 @@ def main(args):
     print(results_df["prediction"].value_counts())
 
     # Save results to CSV
-    results_df.to_csv(args.output, index=False)
-    print(f"\nResults saved to: {args.output}")
+    save_dir = f"classification_results/{args.image_dir}"
+    os.makedirs(save_dir, exist_ok=True)
+    save_path = os.path.join(save_dir, args.output)
+    results_df.to_csv(save_path, index=False)
+    print(f"\nResults saved to: {save_path}")
 
 
 if __name__ == "__main__":

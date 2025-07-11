@@ -16,7 +16,7 @@ def experiment_name(args):
     exp_name += f"-{args.redund_exp}ex"
     exp_name += f"-{args.trial}"
 
-    exp_file = os.path.join(args.results_dir, args.dataset, exp_name, "score.npy")
+    exp_file = os.path.join(args.results_dir, args.dataset, "score.npy")
     os.makedirs(os.path.dirname(exp_file), exist_ok=True)
 
     return exp_name, exp_file
